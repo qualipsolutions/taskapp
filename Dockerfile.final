@@ -1,5 +1,4 @@
-# Optimized Docker build for Next.js taskapp with Puppeteer support
-# Includes Puppeteer with minimal Chromium installation
+# Final optimized Docker build for Next.js taskapp with working Puppeteer support
 
 # Stage 1: Build stage for main app
 FROM node:18-alpine AS builder
@@ -87,6 +86,10 @@ RUN apk add --no-cache \
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
 
+# Copy and configure Chromium wrapper script
+COPY chromium-wrapper.sh /usr/local/bin/chromium-wrapper
+RUN chmod +x /usr/local/bin/chromium-wrapper
+
 # Set working directory for main app
 WORKDIR /app
 
@@ -109,35 +112,6 @@ RUN chown -R nextjs:nodejs /apps
 
 # Configure Puppeteer environment variables for headless operation
 ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
-ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser
-
-# Configure Chrome/Chromium for headless operation in containers
-ENV CHROME_BIN=/usr/bin/chromium-browser
-ENV CHROME_PATH=/usr/bin/chromium-browser
-
-# Create a wrapper script for Puppeteer launch options
-RUN echo '#!/bin/bash\n\
-exec /usr/bin/chromium-browser \
-  --no-sandbox \
-  --disable-setuid-sandbox \
-  --disable-dev-shm-usage \
-  --disable-accelerated-2d-canvas \
-  --no-first-run \
-  --no-zygote \
-  --single-process \
-  --disable-gpu \
-  --headless=new \
-  --disable-background-timer-throttling \
-  --disable-backgrounding-occluded-windows \
-  --disable-renderer-backgrounding \
-  --disable-features=TranslateUI \
-  --disable-ipc-flooding-protection \
-  --disable-web-security \
-  --disable-features=VizDisplayCompositor \
-  "$@"' > /usr/local/bin/chromium-wrapper && \
-  chmod +x /usr/local/bin/chromium-wrapper
-
-# Point Puppeteer to use the wrapper
 ENV PUPPETEER_EXECUTABLE_PATH=/usr/local/bin/chromium-wrapper
 
 # Switch to non-root user
