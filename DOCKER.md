@@ -205,9 +205,82 @@ curl -X POST http://localhost:8080/api/run \
 curl -X GET http://localhost:8080/api/run
 ```
 
+## Deployment and Updates
+
+### After Making Code Changes
+
+When you make changes to the TaskApp or external projects, follow these steps:
+
+1. **For TaskApp changes only:**
+   ```bash
+   ./deploy.sh [version]
+   ```
+
+2. **For external project changes:**
+   ```bash
+   # Re-copy external projects and rebuild
+   ./setup-external-projects.sh
+   ./deploy.sh [version]
+   ```
+
+3. **For both TaskApp and external project changes:**
+   ```bash
+   ./deploy.sh [version]
+   ```
+
+### Docker Hub Deployment
+
+The [`deploy.sh`](deploy.sh:1) script handles:
+- Setting up external projects
+- Building the Docker image
+- Pushing to Docker Hub under `qualipsolutions/taskapp`
+- Tagging with version and latest
+
+**Usage:**
+```bash
+# Deploy with version tag
+./deploy.sh v1.0.0
+
+# Deploy as latest
+./deploy.sh
+```
+
+### Railway Deployment
+
+#### Option 1: Direct Docker Hub Pull (Recommended)
+1. Create a new Railway project
+2. Connect to Docker Hub image: `qualipsolutions/taskapp:latest`
+3. Set environment variables:
+   - `PORT=8080`
+   - `NODE_ENV=production`
+4. Deploy
+
+#### Option 2: GitHub Integration
+1. Push this repository to GitHub
+2. Connect Railway to your GitHub repository
+3. Railway will use the [`railway.toml`](railway.toml:1) configuration
+4. Automatic deployments on git push
+
+### Environment Variables for Railway
+
+Required environment variables:
+```
+PORT=8080
+NODE_ENV=production
+HOSTNAME=0.0.0.0
+```
+
+### Update Workflow
+
+1. **Make changes** to TaskApp or external projects
+2. **Test locally** with `docker-compose up`
+3. **Deploy** with `./deploy.sh v1.x.x`
+4. **Update Railway** (automatic if using Docker Hub image)
+
 ## Next Steps
 
 1. Test the container build and deployment
 2. Update your command scripts to use container paths
-3. Add additional external projects as needed
-4. Consider setting up CI/CD for automated builds
+3. Set up Docker Hub authentication: `docker login`
+4. Deploy to Railway using the provided configuration
+5. Add additional external projects as needed
