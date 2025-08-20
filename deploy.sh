@@ -22,8 +22,15 @@ if ! docker info > /dev/null 2>&1; then
     exit 1
 fi
 
+# Clean up old apps folder to ensure fresh copy
+echo "🧹 Cleaning up old apps folder..."
+if [ -d "apps" ]; then
+    rm -rf apps
+    echo "   Removed existing apps folder"
+fi
+
 # Setup external projects
-echo "🔧 Setting up external projects..."
+echo "🔧 Setting up external projects (copying fresh files)..."
 ./setup-external-projects.sh
 
 if [ $? -ne 0 ]; then
