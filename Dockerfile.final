@@ -50,7 +50,10 @@ RUN yarn install --production --frozen-lockfile
 ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
 ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser
 
-# Remove unnecessary files to reduce size
+# Use container-optimized .env.prod file
+RUN cp .env.prod.container .env.prod
+
+# Remove unnecessary files to reduce size (but keep .env files)
 RUN rm -rf \
     .git \
     .github \
