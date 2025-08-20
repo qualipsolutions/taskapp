@@ -31,9 +31,19 @@ if [ $? -ne 0 ]; then
     exit 1
 fi
 
-# Build the Docker image
-echo "🔨 Building Docker image: ${FULL_IMAGE_NAME}"
-docker build -t ${FULL_IMAGE_NAME} .
+# Always build for linux/amd64 platform (required for cloud deployments)
+echo "🔨 Building Docker image for linux/amd64: ${FULL_IMAGE_NAME}"
+
+# Check if buildx is available
+if ! docker buildx version > /dev/null 2>&1; then
+    echo "❌ Docker buildx is not available. Please update Docker Desktop."
+    exit 1
+fi
+
+# Build for linux/amd64 platform
+echo "   Platform: linux/amd64"
+echo "   This may take a few minutes..."
+docker buildx build --platform linux/amd64 -t ${FULL_IMAGE_NAME} --load .
 
 if [ $? -ne 0 ]; then
     echo "❌ Docker build failed!"
