@@ -1,0 +1,126 @@
+# Optimized Docker build for Next.js taskapp with Puppeteer support
+# Includes Puppeteer with minimal Chromium installation
+
+# Stage 1: Build stage for main app
+FROM node:18-alpine AS builder
+
+# Set working directory for main app
+WORKDIR /app
+
+# Copy package files for main app
+COPY package.json yarn.lock* ./
+
+# Install dependencies for main app
+RUN yarn install --frozen-lockfile
+
+# Copy main app source code
+COPY . .
+
+# Build the Next.js application
+RUN yarn build
+
+# Stage 2: External projects with Puppeteer
+FROM node:18-alpine AS external-deps
+
+# Install necessary tools and Chromium dependencies
+RUN apk add --no-cache \
+    bash \
+    chromium \
+    nss \
+    freetype \
+    freetype-dev \
+    harfbuzz \
+    ca-certificates \
+    ttf-freefont
+
+# Create apps directory
+RUN mkdir -p /apps
+
+# Copy external projects from build context
+COPY ./apps/fyve-smart-links /apps/fyve-smart-links
+
+WORKDIR /apps/fyve-smart-links
+
+# Remove only development dependencies, keep Puppeteer
+RUN node -e "const pkg = require('./package.json'); delete pkg.devDependencies; require('fs').writeFileSync('./package.json', JSON.stringify(pkg, null, 2));"
+
+# Install production dependencies including Puppeteer
+RUN yarn install --production --frozen-lockfile
+
+# Configure Puppeteer to use system Chromium
+ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
+ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser
+
+# Remove unnecessary files to reduce size
+RUN rm -rf \
+    .git \
+    .github \
+    .husky \
+    .vscode \
+    cypress \
+    cypress.config.js \
+    test.sh \
+    tests \
+    *.md \
+    .eslintrc.json \
+    .prettierrc \
+    .prettierignore \
+    .babelrc \
+    .dockerignore \
+    yarn.lock
+
+# Stage 3: Production stage
+FROM node:18-alpine AS runner
+
+# Install necessary tools and Chromium dependencies
+RUN apk add --no-cache \
+    bash \
+    chromium \
+    nss \
+    freetype \
+    freetype-dev \
+    harfbuzz \
+    ca-certificates \
+    ttf-freefont
+
+# Create non-root user for security
+RUN addgroup --system --gid 1001 nodejs
+RUN adduser --system --uid 1001 nextjs
+
+# Set working directory for main app
+WORKDIR /app
+
+# Copy built application from builder stage
+COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
+COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+COPY --from=builder --chown=nextjs:nodejs /app/package.json ./package.json
+
+# Create public directory
+RUN mkdir -p ./public
+
+# Copy optimized external projects from external-deps stage
+COPY --from=external-deps --chown=nextjs:nodejs /apps /apps
+
+# Create necessary directories for external projects
+RUN mkdir -p /apps/fyve-smart-links/downloads /apps/fyve-smart-links/public /apps/fyve-smart-links/views
+
+# Set ownership of apps directory to nextjs user
+RUN chown -R nextjs:nodejs /apps
+
+# Configure Puppeteer environment variables
+ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
+ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser
+
+# Switch to non-root user
+USER nextjs
+
+# Expose port
+EXPOSE 8080
+
+# Set environment variables
+ENV NODE_ENV=production
+ENV PORT=8080
+ENV HOSTNAME="0.0.0.0"
+
+# Start the application
+CMD ["node", "server.js"]
