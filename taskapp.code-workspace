@@ -1,0 +1,32 @@
+{
+	"folders": [
+		{
+			"path": "."
+		},
+		{
+			"path": "../../../fyve/fyve-smart-links"
+		}
+	],
+	"settings": {
+		"workbench.colorCustomizations": {
+			"activityBar.activeBackground": "#dd9b95",
+			"activityBar.background": "#dd9b95",
+			"activityBar.foreground": "#15202b",
+			"activityBar.inactiveForeground": "#15202b99",
+			"activityBarBadge.background": "#e7f7e8",
+			"activityBarBadge.foreground": "#15202b",
+			"commandCenter.border": "#15202b99",
+			"sash.hoverBorder": "#dd9b95",
+			"statusBar.background": "#d1766e",
+			"statusBar.foreground": "#15202b",
+			"statusBarItem.hoverBackground": "#c55147",
+			"statusBarItem.remoteBackground": "#d1766e",
+			"statusBarItem.remoteForeground": "#15202b",
+			"titleBar.activeBackground": "#d1766e",
+			"titleBar.activeForeground": "#15202b",
+			"titleBar.inactiveBackground": "#d1766e99",
+			"titleBar.inactiveForeground": "#15202b99"
+		},
+		"peacock.color": "#d1766e"
+	}
+}
